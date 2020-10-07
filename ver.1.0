@@ -1,9 +1,8 @@
-# ver.1
+# ver.1.0
 # 누적파일 생성
 # 제품명이 업체별로 다 틀려서 상품명 별로 제품 수량 따로 파악 필요함!
 
 import pandas as pd
-import os
 import numpy as np
 
 class Getorder :

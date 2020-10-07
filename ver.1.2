@@ -1,0 +1,414 @@
+# ver.1.2 wx 적용
+# 누적파일 생성
+# 제품명이 업체별로 다 틀려서 상품명 별로 제품 수량 따로 파악 필요함!
+# 업체별 주문량 정리
+
+
+import pandas as pd
+import datetime
+import numpy as np
+import wx
+
+# 전역 변수 선언
+a = pd.DataFrame({}) # 초기화
+order = "" # 주문서 파일이름
+
+
+
+app = wx.App()
+frame = wx.Frame(None)
+# 사이즈 설정
+fsize = wx.Size(400, 400)  # 사이즈 설정
+frame.SetSize(fsize)
+fpos = wx.Point(300, 100)  # 위치 설정
+frame.SetPosition(fpos)
+frame.SetTitle("주문서 처리")  # 윈도우바 타이틀 설정
+frame.SetWindowStyle(wx.DEFAULT_FRAME_STYLE & ~wx.RESIZE_BORDER & ~wx.MAXIMIZE_BOX)  # 크기 변경 불가
+
+
+#버튼생성
+btn1 = wx.Button(frame, label = '주문서 불러오기')
+btn2 = wx.Button(frame, label = '수량 파악')
+btn3 = wx.Button(frame, label = '총액 계산')
+btn4 = wx.Button(frame, label = '업체별 정리')
+btn5 = wx.Button(frame, label = '도움말')
+btn6 = wx.Button(frame, label = '끝내기')
+
+#사이저
+gbox = wx.GridSizer(3,2,15,15) # 그리드사이저 설정 3행 2열 15픽셀 간격
+frame.SetSizer(gbox) # 셋 사이저
+gbox.Add(btn1, 0, wx.EXPAND)
+gbox.Add(btn2, 0, wx.EXPAND)
+gbox.Add(btn3, 0, wx.EXPAND)
+gbox.Add(btn4, 0, wx.EXPAND)
+gbox.Add(btn5, 0, wx.EXPAND)
+gbox.Add(btn6, 0, wx.EXPAND)
+
+#다이얼로그 생성
+def btn1textdialog():
+    dIg = wx.TextEntryDialog(message='주문서 파일 이름을 입력해주세요!',parent=None) # 다이얼로그 생성
+    try:
+        if dIg.ShowModal() == wx.ID_OK:
+            vdIg = dIg.GetValue() # 값 추출
+    finally:
+        dIg.Destroy() # 다이얼로그 파괴
+    return vdIg  # 값을 반환
+
+class Btn2dialog(wx.Dialog):
+    # btn2 다이얼로그 입력값 여러개
+    def __init__(self):
+        wx.Dialog.__init__(self, parent=None, title='상품이 없을때', size=(300, 200))
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        message = wx.StaticText(self, label='★주의!! 엑셀에 있는 값 그대로 써주세요★')
+
+        # 상품명
+        name_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.name_edit = wx.TextCtrl(parent=self, name='상품명')
+        name_sizer.Add(wx.StaticText(self, label='상품명: '), 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        name_sizer.Add(self.name_edit, 4, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 10)
+
+        # 종류
+        pname_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.pname_edit = wx.TextCtrl(parent=self, name='종류')
+        pname_sizer.Add(wx.StaticText(self, label='종류: '), 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        pname_sizer.Add(self.pname_edit, 4, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 10)
+
+        # 수량
+        num_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.num_edit = wx.TextCtrl(parent=self, name='수량')
+        num_sizer.Add(wx.StaticText(self, label='수량: '), 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        num_sizer.Add(self.num_edit, 4, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 10)
+
+        # OK, CANCEL buttons
+        _btns_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        okbtnSizer = self.CreateStdDialogButtonSizer(wx.OK)
+        _btns_sizer.Add(okbtnSizer, 1, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        #
+        sizer.Add(message, 1, wx.ALIGN_CENTER | wx.TOP, 5)
+        sizer.Add(name_sizer, 1, wx.ALIGN_CENTER | wx.TOP, 5)
+        sizer.Add(pname_sizer, 1, wx.ALIGN_CENTER | wx.TOP, 5)
+        sizer.Add(num_sizer, 1, wx.ALIGN_CENTER | wx.TOP, 5)
+        sizer.Add(wx.StaticLine(self, size=(250, 2)), 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 5)
+        sizer.Add(_btns_sizer, 1, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 5)
+        self.SetSizer(sizer)
+
+    def GetValue(self):
+        return self.name_edit.GetLineText(0), self.pname_edit.GetLineText(0), self.num_edit.GetLineText(0) # 값 반환
+    
+class Helpdialog(wx.Dialog):
+    def __init__(self):
+        wx.Dialog.__init__(self, parent=None, title='도움말',size = (600,600))
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        message = wx.StaticText(self, label='★도움말★')
+        help = wx.StaticText(self, label = """1. 모든 입력은 파일명, 엑셀에 있는 데이터값 그대로 적어주세요.\n
+2. 상품이 없다고 뜨는 상품들은 이야기해주시면 추가해서 프로그램 업데이트 해드리겠습니다.\n
+3. 에로사항이나 문의사항 있으시면 010-2094-7805 정광원 으로 문자 주세요!!\n
+4. 프로그램과 저장되는 폴더들은 같은 폴더안에 둬주세요(그래야 오류안뜸!!)\n\n\n\n\n\n\n
+made by Pupba.J""")
+        sizer.Add(message, 10, wx.ALIGN_CENTER | wx.TOP, 5)
+        sizer.Add(help, 1, wx.ALIGN_CENTER | wx.TOP, 5)
+    
+
+
+
+class Getorder :
+
+    def getOrder(self,str):
+        # 주문서 입력
+        # 주문서 파일 이름 입력
+        putorder = pd.read_excel("주문서/"+ str +'.xlsx')
+        putorder.sort_values(by = '상품명',ascending=False) #데이터 정렬
+        putorder['택배비'] = np.where(putorder['택배비'].str.len()== 2, '0' ,putorder['택배비']) #택배비 무료 0원으로 변환
+        name = putorder['상품명'] # 상품명
+        num = putorder['수량'] # 수량
+        price = putorder['단가'] # 단가
+        postprice = putorder['택배비'] # 택배비
+        account = putorder['거래처'] # 거래처
+
+        # 상품명 재정리
+        # 아보카도오일 퓨어 1+1 = 퓨어 2병 / 아보카도오일 퓨어 1+1
+
+        l = pd.concat([account,name,num,price,postprice],axis =1) # 거래처,상품명,수량,단가,택배비 데이터 베이스
+        l.to_excel('정리/'+str+'정리.xlsx',index = False) # 정리파일 저장
+
+        return l # 정리 파일 반환
+
+
+    def countproduct(self,dataframe): # 총 생산 병 개수 파악
+
+        # 입력받은 데이터프레임 반환
+
+        l = dataframe # 데이타프레임 저장
+        fl_name=l['상품명'].dropna() # 결측치 제거 상품명 default or 0 행기준 / axis = 1 열기준
+        fl_num=l['수량'].dropna() # 결측지 제거 수량
+        f = pd.concat([fl_name,fl_num],axis=1) # 상품명 , 수량
+
+        # 데이터프레임에서 상품명 추출
+        llist =fl_name.tolist() # 상품명 컬럼 데이터 리스트로 변환
+        list_set = set(llist) # 집합으로 변환해 중복 제거
+        listN = list(list_set) # 다시 리스트로 변환하여 주문서에있는 상품명 리스트로 작성
+
+        #주문 총 병 개수 파악 
+        allex = pd.DataFrame({'퓨어':[0],'버진':[0],'올리브':[0]}) #상품별 목록 데이터프레임 생성
+        for i in listN:  # for 문으로 목록 돌리기
+
+            a=0 # 제품명 있는지 없는지 체크
+
+            # 1. 아보카도오일 핑크골드
+            if i == '아보카도오일 핑크골드1호':
+                f1 = f['상품명'] == i  # 맞으면 True 아니면 False 반환
+                f1_ = f[f1]
+                f1_s = f1_['수량']
+                sf1 = pd.DataFrame({'총 개수': [0]})  # 데이터프레임 초기화
+                sf1 = f1_s.sum()  # 더하기
+                sf1 = sf1.astype('int')  # 정수 변환
+                sf1 = sf1 * 2  # 퓨어 2병
+                allex['퓨어'] += sf1  # 데이터 프레임 누적
+
+
+            # 2. 아보카도오일 퓨어 1+1 총 2병 / 선물용 박스제품(요청사항에 입력)
+            elif i == '아보카도오일 퓨어 1+1 총 2병 / 선물용 박스제품(요청사항에 입력)':
+                f1 = f['상품명'] == i  # 맞으면 True 아니면 False 반환
+                f1_ = f[f1]
+                f1_s = f1_['수량']
+                sf1 = pd.DataFrame({'총 개수': [0]})  # 데이터프레임 초기화
+                sf1 = f1_s.sum()  # 더하기
+                sf1 = sf1.astype('int')  # 정수 변환
+                sf1 = sf1 * 2  # 퓨어 2병
+                allex['퓨어'] += sf1  # 데이터 프레임 누적
+
+            #3. 아보카도오일 엑스트라버진 250ml 1병 (낱병)
+            elif i == '아보카도오일 엑스트라버진 250ml 1병 (낱병)':
+                f1 = f['상품명'] == i  # 맞으면 True 아니면 False 반환
+                f1_ = f[f1]
+                f1_s = f1_['수량']
+                sf1 = pd.DataFrame({'총 개수': [0]})  # 데이터프레임 초기화
+                sf1 = f1_s.sum()  # 더하기
+                sf1 = sf1.astype('int')  # 정수 변환
+                allex['버진'] += sf1  # 데이터 프레임 누적
+
+            #4. 퓨어 250ml 2병+10ml2포증정
+            elif i == '퓨어 250ml 2병+10ml2포증정':
+                f1 = f['상품명'] == i  # 맞으면 True 아니면 False 반환
+                f1_ = f[f1]
+                f1_s = f1_['수량']
+                sf1 = pd.DataFrame({'총 개수': [0]})  # 데이터프레임 초기화
+                sf1 = f1_s.sum()  # 더하기
+                sf1 = sf1.astype('int')  # 정수 변환
+                sf1 = sf1 * 2 #퓨어 2병
+                allex['퓨어'] += sf1  # 데이터 프레임 누적
+
+            #5. 핑크골드
+            elif i == '핑크골드':
+                f1 = f['상품명'] == i  # 맞으면 True 아니면 False 반환
+                f1_ = f[f1]
+                f1_s = f1_['수량']
+                sf1 = pd.DataFrame({'총 개수': [0]})  # 데이터프레임 초기화
+                sf1 = f1_s.sum()  # 더하기
+                sf1 = sf1.astype('int')  # 정수 변환
+                sf1 = sf1 * 2  # 퓨어 2병
+                allex['퓨어'] += sf1  # 데이터 프레임 누적
+
+            else :
+                a += 1 # 상품이 없을 떄 1 추가
+                if a!= 0 :
+                    wx.MessageBox(i + ' <--이 상품은 저장된 목록에 없습니다.', "수량파악", wx.OK)
+                    #예외처리
+                    name = None
+                    pname = None
+                    num_ = None
+                    bt2dlg = Btn2dialog() # 새로운 상품명 입력 받기
+                    try : 
+                        if bt2dlg.ShowModal() == wx.ID_OK:
+                            name, pname, num_ = bt2dlg.GetValue() # 값가져오기
+                            num = int(num_) # 정수형변환
+                    finally:
+                        bt2dlg.Destroy() # 다이얼로그 끄기
+                    # 상품명 리스트에서 입력한 상품이있는지 없는지 검사
+                    for k in listN:
+                        if k == name:  # 리스트에 입력한 상품이 있을 때
+                            f1 = f['상품명'] == name  # 맞으면 True 아니면 False 반환
+                            f1_ = f[f1]  # T 인것만 f1_에 저장
+                            f1_s = f1_['수량']  # 수량 컬럼에 값을 f1_s에 저장
+                            sf1 = pd.DataFrame({'총 개수': [0]})  # 데이터프레임 초기화
+                            sf1 = f1_s.sum()  # 수량 컬럼 데이터 더하기
+                            sf1 = sf1.astype('int')  # 데이터 정수형 변환
+                            sf1 = sf1 * num  #
+                            allex[pname] += sf1  # 데이터 프레임 누적
+        allex.to_excel("정리/주문병 수.xlsx",index=False) # 상품 목록 정리 저장
+
+
+    def priceCalculator(self,dataframe):
+        l = dataframe #데이터 프레임
+        fl_account = l['거래처'].dropna() # 결측치 제거 거래처
+        fl_name = l['상품명'].dropna()  # 결측치 제거 상품명 default
+        # or 0 행기준 / axis = 1 열기준
+        fl_num = l['수량'].dropna()  # 결측지 제거 수량
+        fl_price = l['단가'].dropna() # 결측치 제거 단가
+        fl_post = l['택배비'].dropna() # 결측치 제거 택배비
+        total = pd.DataFrame({}) # 초기화
+        s_total = pd.DataFrame({}) # 초기화
+        total['총액'] = (fl_num * fl_price) # 개수 * 단가
+        total['총액']=total['총액'].astype('int64') # 형변환
+        fl_post=fl_post.astype('int64') # 형변환
+        total['총액'] = total['총액'] + fl_post # 총액 = 개수 * 단가 + 택배비
+        s_total = total['총액'].sum()
+
+
+        df = pd.DataFrame({}) # 데이터 프레임 생성
+        df = pd.concat([fl_account,fl_name,fl_num,fl_price,fl_post,total],axis=1)
+        df.to_excel("총금액/총금액.xlsx")
+        return s_total #총금액 반환
+
+
+    def today(self):
+        # 현재 시간 값 구해서 리턴
+        now = datetime.datetime.now() # 시스템 시간
+        nowDate = now.strftime('%Y-%m-%d')  # 날짜만 추출
+        return nowDate
+
+
+    def getAccount(self,dataframe,str):
+        # 업체별 주문량 정리
+        l = dataframe # 데이터프레임
+        fl_name = l['상품명'].dropna()  # 결측치 제거 상품명 default or 0 행기준 / axis = 1 열기준
+        fl_num = l['수량'].dropna()  # 결측지 제거 수량
+        fl_account = l['거래처'].dropna() # 결측치 제거 거래처
+        f = pd.concat([fl_account,fl_name, fl_num], axis=1)  # 거래처,상품명 , 수량
+
+        # 데이터프레임에서 거래처 추출
+        llist = fl_account.tolist()  # 상품명 컬럼 데이터 리스트로 변환
+        list_set = set(llist)  # 집합으로 변환해 중복 제거
+        listN = list(list_set)  # 다시 리스트로 변환하여 주문서에있는 상품명 리스트로 작성
+
+        # 업체별로 자르기
+        acoEA = pd.DataFrame({}) # 종합 데이터 프레임
+        a = 0 # 오류제어
+        for i in listN :
+            # 1. 카카오스토리
+            if i == '카카오스토리':
+                ka = f[f['거래처'] == '카카오스토리'] # 카카오스토리
+                ka_ = ka.astype({'수량':'int64'}) # 컬럼 데이터 타입 변경
+            # 2. 위메프
+            elif i == '위메프':
+                we = f[f['거래처'] == '위메프']   # 위메프
+                we_ = we.astype({'수량': 'int64'})  # 컬럼 데이터 타입 변경
+            # 3. gs몰
+            elif i == 'gs몰':
+                gs = f[f['거래처'] == 'gs몰']  # gs
+                gs_ = gs.astype({'수량': 'int64'})  # 컬럼 데이터 타입 변경
+            # 4. 티몬
+            elif i == '티몬':
+                ti = f[f['거래처'] == '티몬']  # 티몬
+                ti_ = ti.astype({'수량': 'int64'})  # 컬럼 데이터 타입 변경
+            # 5. 충남 유통
+            elif i == '충남유통':
+                ch = f[f['거래처'] == '충남유통']  # 충남유통
+                ch_ = ch.astype({'수량': 'int64'})  # 컬럼 데이터 타입 변경
+            # 6. 업체가 없을 때
+            else :
+                print(i + ' <--이 거래처는 저장된 목록에 없습니다.')
+                name = input('거래처 이름을 입력해주세요 ★주의!! 엑셀에 있는 값 그대로 써주세요★ : ')  # 새로운 거래처 입력 받기
+                nname = f[f[name]==name] # 새로운 거래처
+                nname_ = nname.astype({'수량':'int64'}) # 컬럼 데이터 타입 변경
+                a = 1 # 오류 발생
+
+
+        # 데이터 종합
+        if a == 0 :
+            acoEA = pd.concat([ka_,we_,gs_,ti_,ch_],axis=0) # 종합
+            acoEA.to_excel('업체별 정리/'+ str +'.xlsx',index = False)
+        elif a != 0 :
+            acoEA = pd.concat([ka_, we_, gs_, ti_, ch_,nname_], axis=0)  # 종합
+            acoEA.to_excel('업체별 정리/' + str + '.xlsx', index = False)
+
+
+
+# 버튼 클릭 이벤트 생성
+def onClickbtn1(event) :
+    try :
+        start = Getorder() # 클래스 활성화
+        global order # 주문서 파일이름
+        order = btn1textdialog() # 텍스트 다이얼로그 실행
+        global a # 전역변수 선언
+        a = start.getOrder(order) # 주문서 값 불러오고 a에 전달
+        wx.MessageBox("완료되었습니다.", "주문서불러오기", wx.OK)
+    except:
+        wx.MessageBox("실패했습니다ㅠㅠ", "주문서불러오기", wx.OK)
+btn1.Bind(wx.EVT_BUTTON, onClickbtn1)  # 버튼 1
+
+def onClickbtn2(event) :
+    try :
+        start = Getorder() # 클래스 활성화
+        global a # 데이터프레임
+        start.countproduct(a) # 수량파악
+        wx.MessageBox("완료되었습니다.", "수량파악", wx.OK)
+    except :
+        wx.MessageBox("실패했습니다ㅠㅠ", "수량파악", wx.OK)
+btn2.Bind(wx.EVT_BUTTON, onClickbtn2) # 버튼 2
+
+def onClickbtn3(event) :
+    try :
+        start = Getorder() # 클래스 활성화
+        global a # 주문서 데이터프레임
+        total = start.priceCalculator(a) # 총액 계산
+        stotal = str(total) # 문자열 형변환
+        wx.MessageBox("총금액 : "+stotal+"원", "총액계산", wx.OK)
+        wx.MessageBox("완료되었습니다.", "총액계산", wx.OK)
+    except :
+        wx.MessageBox("실패했습니다ㅠㅠ", "총액계산", wx.OK)
+btn3.Bind(wx.EVT_BUTTON, onClickbtn3) # 버튼 3
+
+def onClickbtn4(event) :
+    try :
+        start = Getorder() # 클래스 활성화
+        global a #주문서 파일이름
+        global order
+        start.getAccount(a,order) # 업체별정리
+        wx.MessageBox("완료되었습니다.", "총액계산", wx.OK)
+    except :
+        wx.MessageBox("실패했습니다ㅠㅠ", "총액계산", wx.OK)
+btn4.Bind(wx.EVT_BUTTON, onClickbtn4) # 버튼 4
+
+def onClickbtn5(event) :
+    try :
+        start = Helpdialog()
+        try:
+            start.ShowModal() == wx.ID_OK
+        finally:
+            start.Destroy()  # 다이얼로그 끄기
+    except :
+        wx.MessageBox("실패했습니다ㅠㅠ", "도움말", wx.OK)
+btn5.Bind(wx.EVT_BUTTON, onClickbtn5) # 버튼 5
+
+def onClickbtn6(event) :
+    try :
+        wx.MessageBox("종료합니다.", "종료", wx.OK)
+        wx.Exit() #종료
+    except :
+        wx.MessageBox("실패했습니다ㅠㅜ", "종료", wx.OK)
+btn6.Bind(wx.EVT_BUTTON, onClickbtn6) # 버튼 6
+
+
+
+start1 = Getorder() # 클래스 활성화
+now1=start1.today() #당일날짜 불러오기
+
+
+#텍스트 및 날짜 띄우기
+text1 = wx.StaticText(frame, label = now1) # 당일 날짜 띄우기
+text2 = wx.StaticText(frame, label = 'ver.1.2') # VER1.2
+font1 = wx.Font(10,wx.SWISS,wx.NORMAL,wx.BOLD) # 폰트
+text1.SetFont(font1) # 폰트 체인지
+text2.SetFont(font1) # 폰트 체인지
+tpos1 = wx.Point(0, 0) # 위치 좌표
+tpos2 = wx.Point(340, 0) # 위치 좌표
+text1.SetPosition(tpos1) # t1 위치설정
+text2.SetPosition(tpos2) # t2 위치설정
+
+
+frame.Show(True)
+app.MainLoop()

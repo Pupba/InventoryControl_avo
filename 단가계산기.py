@@ -69,7 +69,7 @@ def totalprice(str1):
             we_df['거래처'][i] = Nl
             t = str(wep_n[i])
             we_df['상품명'][i] = t
-            nwe = we_[we_['상품명'] == wep_n[i]] # 이 상품이 들어간 열만 추출
+            nwe = we_[we_['상품명'] == wep_n[i]] # 이 상품이 들어간 행만 추출
             snwe = nwe['수량']
             isnwe = snwe.sum() # 개수 총합
             isnwe = isnwe.astype("int")

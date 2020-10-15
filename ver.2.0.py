@@ -1,7 +1,6 @@
-# ver.2.0
-# 엑셀을 읽어와서 상품명 자동 습득 알고리즘 적용
-# 오류최소화를 위해 경로 값 os 모듈로 얻어와서 설정
-# 최대한 간소화...
+# ver.2.1
+# 단가계산기 삭제
+# 각종 오류 수정
 
 # 모듈 import
 import openpyxl
@@ -13,7 +12,7 @@ import wx
 
 # 전역변수 선언
 order = pd.DataFrame({}) # 빈 데이터프레임(주문서)
-bottle = pd.DataFrame({'퓨어250ml':[0],'퓨어500ml':[0],'버진250ml':[0],'버진500ml':[0],'올리브':[0],'키토썸MCT오일':[0]}) # 병 종합
+bottle = pd.DataFrame({'퓨어250ml':[0],'퓨어500ml':[0],'버진250ml':[0],'버진500ml':[0],'올리브':[0],'키토썸MCT오일':[0],'톡톡아보오일세트':[0]}) # 병 종합
 path = str(os.getcwd()) # 경로 설정 작업 폴더
 rbottle = pd.read_excel(path+'/정리/주문병 수.xlsx') # 기본 주문병 수 불러오기
 
@@ -69,7 +68,7 @@ class Numandkind(wx.Dialog):
         self.te = te
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        message = wx.StaticText(self, label=te+'입력\n띄어쓰기 주의!!\n종류 : 버진250ml,500ml,퓨어250ml,500ml,키토썸MCT오일,올리브')
+        message = wx.StaticText(self, label=te+'입력\n띄어쓰기 주의!!\n종류 : 버진250ml,500ml,퓨어250ml,500ml,키토썸MCT오일,올리브,톡톡아보오일세트')
 
         # 종류
         pname_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -129,15 +128,13 @@ class Backend :
         global order # df 사용하겠다 선언
         temp = pd.read_excel(path+'/주문서/'+str1+'.xlsx') # 주문서 읽어오기
         temp.sort_values(by = '거래처',ascending=False) # 거래처 기준으로 내림차순 정렬
-        temp['택배비'] = np.where(temp['택배비'].str.len()== 2, '0' ,temp['택배비']) #택배비 무료 0원으로 변환
         # 필요한 데이터만 뽑아서 데이터프레임 만들기
         temp_pr = temp['상품명']
         temp_nu = temp['수량']
-        temp_po = temp['택배비']
         temp_cli = temp['거래처']
-        temp_ = pd.concat([temp_cli,temp_pr,temp_nu,temp_po],axis=1)
+        temp_ = pd.concat([temp_cli,temp_pr,temp_nu],axis=1)
         ftemp1 = temp_.dropna(axis=0) # 결측치 제거
-        ftemp2 = ftemp1.astype({'수량':'int','택배비':'int'}) # 정수형변환
+        ftemp2 = ftemp1.astype({'수량':'int'}) # 정수형변환
         # 거래처 별 상품 개수 파악 및 단가 계산
         na = ftemp2['거래처']
         nlist = na.tolist()
@@ -151,7 +148,7 @@ class Backend :
             setp = set(plist)
             pnm = list(setp) # 상품명 리스트 작성
             index = list(range(len(pnm))) # 인덱스 길이 생성
-            nwd = pd.DataFrame([{'거래처':'','상품명':'','수량':[0],'택배비':[0],'총금액':[0]}],index=index)
+            nwd = pd.DataFrame([{'거래처':'','상품명':'','수량':[0]}],index=index)
             for i in range(len(pnm)) :
                 nwd['거래처'][i] = Nl
                 t = str(pnm[i]) # 문자열
@@ -161,71 +158,90 @@ class Backend :
                 sum_ = nun_.sum() #개수 총합
                 nwd['수량'][i] = sum_ # 총수량 데이터프레임에 입력
 
-                # 단가 입력 받기
-                price = int(inputPrice(t)) # 단가 입력 다이얼로그 생성
-                postprices = ftemp2['택배비']
-                postprice = postprices.sum()  # 택배비 총합
-                ipost = postprice.astype('int')
-                nwd['택배비'][i] = ipost  # 택배비
-                totalprice = (price * sum_) + ipost
-
-
                 i+=1 # 반복문 제어
-            nwd['총금액'] = totalprice # 총금액 입력
             order = pd.concat([order,nwd],axis=0)
             order = order.dropna() # 결측치 제거
 
-        #엑셀로 만들기
-        order.to_excel(path+'/총금액/'+str1+'총금액.xlsx',index=False)
 
         #2. 병 수량
         order_pname = order['상품명']
         order_num = order['수량']
         tempbottle = pd.concat([order_pname,order_num],axis=1)
+        lpname = [] # 입력받는 병 종류 리스트
         #상품명별로 병 종류 및 총 병 개수 종합
         global bottle
         pplist = order_pname.tolist()
         setpp = set(pplist)
         pnmm = list(setpp)  # 상품명 리스트 작성
-        ibottle = pd.DataFrame({'퓨어250ml':[0],'퓨어500ml':[0],'버진250ml':[0],'버진500ml':[0],'올리브':[0],'키토썸MCT오일':[0]})  # 임시 저장 데이타 프레임
+        ibottle = pd.DataFrame({})  # 임시 저장 데이타 프레임
         for Nd in pnmm :
-            temp__ = tempbottle[tempbottle['상품명'] == Nd] # 상품별 추출
+            temp__ = tempbottle[tempbottle['상품명'] == Nd] # 상품별 추출 데이터프레임
+            # 중복 오류 제거
+            ftemp__ = pd.DataFrame([{}])
+            tname = pd.DataFrame([{'상품명':Nd}])
+            tnu = temp__['수량'].sum()
+            ttnu = pd.DataFrame([{'수량':[0]}])
+            ttnu['수량'][0] = tnu
+            ftemp__ = pd.concat([tname,ttnu],axis=1)
+
             start2 = Numandkind(Nd) # 클래스 선언
             product = None
             num = None
             num_ = None  # 초기화
             try:
                 if start2.ShowModal() == wx.ID_OK:
-                    product, num_ = start2.GetValue()  # 값가져오기
-                    num = int(num_)  # 정수형변환
+                    product_, num_ = start2.GetValue()  # 값가져오기
+                    num = int(num_)# 정수형변환
+                    tt = pd.Series(num)
+                    product = str(product_)
+                    lpname.append(product)
+
             finally:
                 start2.Destroy()  # 다이얼로그 끄기
-            num_ = int(temp__['수량']) * num # 같은 변수형으로 해야 오류 안남
-            bottle_ = pd.DataFrame([{}])  # 저장할 데이터프레임
-            bottle_[product] = num_
-            ibottle = pd.concat([ibottle,bottle_],axis=0)
-            ibottle = ibottle.fillna(int(0)) # 결측치 0으로
-            ibottle = ibottle.astype({'퓨어250ml': 'int','퓨어500ml': 'int', '버진250ml': 'int','버진500ml': 'int', '올리브': 'int', '키토썸MCT오일': 'int'})
 
-        pure250 = ibottle['퓨어250ml'].sum()
-        bottle['퓨어250ml']+=pure250
-        pure500 = ibottle['퓨어500ml'].sum()
-        bottle['퓨어500ml'] += pure500
-        ver250 = ibottle['버진250ml'].sum()
-        bottle['버진250ml'] += ver250
-        ver500 = ibottle['버진500ml'].sum()
-        bottle['버진500ml'] += ver500
-        oliv = ibottle['올리브'].sum()
-        bottle['올리브'] += oliv
-        kitos = ibottle['키토썸MCT오일'].sum()
-        bottle['키토썸MCT오일'] += kitos
+            temp__ = ftemp__.astype({'수량':'int64'})
+            num_ =  ftemp__['수량'][0] * tt[0] # 같은 변수형으로 해야 오류 안남
+            bottle_ = pd.DataFrame([{product:[0]}])  # 저장할 데이터프레임
+            inum_ = num_.astype('int64')
+            bottle_[product] = num_
+            ibottle = pd.concat([bottle_,ibottle],axis=0,ignore_index=True)
+            ibottle = ibottle.fillna(int(0)) # 결측치 0으로
+
+
+        # 상품추출
+        sll = set(lpname)
+        llpname = list(sll) # 종류 추출
+        for kk in llpname :
+            if kk == '퓨어250ml':
+                pure250 = ibottle['퓨어250ml'].sum()
+                bottle['퓨어250ml']+=pure250
+            elif kk == '퓨어500ml':
+                pure500 = ibottle['퓨어500ml'].sum()
+                bottle['퓨어500ml'] += pure500
+            elif kk == '버진250ml':
+                ver250 = ibottle['버진250ml'].sum()
+                bottle['버진250ml'] += ver250
+            elif kk == '버진500ml':
+                ver500 = ibottle['버진500ml'].sum()
+                bottle['버진500ml'] += ver500
+            elif kk == '올리브':
+                oliv = ibottle['올리브'].sum()
+                bottle['올리브'] += oliv
+            elif kk == '키토썸MCT오일':
+                kitos = ibottle['키토썸MCT오일'].sum()
+                bottle['키토썸MCT오일'] += kitos
+            elif kk == '톡톡아보오일세트':
+                tt = ibottle['톡톡아보오일세트'].sum()
+                bottle['톡톡아보오일세트'] +=tt
 
         # 기존 엑셀에 더하기
+        bottle1 = bottle.astype({'퓨어250ml':'int','퓨어500ml':'int','버진250ml':'int','버진500ml':'int','올리브':'int','키토썸MCT오일':'int','톡톡아보오일세트':'int'})
         global rbottle
-        rbottle += bottle
+        rbottle += bottle1
         # 엑셀로 만들기
-        bottle.to_excel(path+'/정리/'+str1+'주문병수.xlsx',index=False)
+        bottle.to_excel(path+'/정리/'+str1+'주문병수.xlsx')
         rbottle.to_excel(path+'/정리/주문병 수.xlsx',index=False)
+        bottle = pd.DataFrame({'퓨어250ml': [0], '퓨어500ml': [0], '버진250ml': [0], '버진500ml': [0], '올리브': [0], '키토썸MCT오일': [0],'톡톡아보오일세트':[0]})  # 초기화
 
 
 # event setting
@@ -233,7 +249,8 @@ def onClickbtn1(event) :
     try :
         start = Backend()
         orde=btn1textdialog() # 주문서 파일 이름 입력 받기
-        start.getOrder(orde) # 주문서 처리 시작
+        sorde = str(orde)
+        start.getOrder(sorde) # 주문서 처리 시작
         wx.MessageBox("완료!", "주문서처리", wx.OK)
     except Exception as ex:
         t1 = str(ex)

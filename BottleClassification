@@ -1,0 +1,295 @@
+import wx
+
+
+num = 0
+product = None
+
+class Dialog(wx.Dialog):
+    def __init__(self,parent,num):
+        wx.Dialog.__init__(self, parent = None ,title = "입력",size = (300,300))
+
+        # 상품 종류 리스트
+        plist = ['퓨어250ml', '퓨어500ml', '퓨어1L', '버진250ml', '버진500ml', '미녀플랜아보카도오일250ml',
+                 '올리브250ml', '톡톡300ml(1box)', '톡톡100ml', '톡톡10ml', '세븐화이바',
+                 '키토썸MCT250ml', '키토썸아보카도오일250ml', '즐거운유아보카도오일500ml']
+        # OK, CANCEL buttons
+        _btns_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        okbtnSizer = self.CreateStdDialogButtonSizer(wx.OK)
+        canbtnSizer = self.CreateStdDialogButtonSizer(wx.CANCEL)
+        _btns_sizer.Add(okbtnSizer, 1, wx.ALIGN_CENTER_VERTICAL, 0)
+        _btns_sizer.Add(canbtnSizer, 1, wx.ALIGN_CENTER_VERTICAL, 0)
+
+        # 사이저 생성
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        if num == 1 :
+        # 입력 개수에 따라 위젯이름 셋팅
+            self.combo1 = wx.ComboBox(self, choices = plist) # 종류 선택
+            self.num1 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box1 = wx.BoxSizer(wx.HORIZONTAL)
+            box1.Add(self.combo1, 0, flag = wx.ALIGN_LEFT)
+            box1.Add(self.num1, 0, flag=wx.ALIGN_LEFT)
+            sizer.Add(box1,0,border = 10,flag = wx.TOP)
+        elif num == 2 :
+            self.combo1 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num1 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box1 = wx.BoxSizer(wx.HORIZONTAL)
+            box1.Add(self.combo1, 0, flag=wx.ALIGN_LEFT)
+            box1.Add(self.num1, 0, flag=wx.ALIGN_LEFT)
+            self.combo2 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num2 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box2 = wx.BoxSizer(wx.HORIZONTAL)
+            box2.Add(self.combo2, 0, flag=wx.ALIGN_LEFT)
+            box2.Add(self.num2, 0, flag=wx.ALIGN_LEFT)
+            sizer.Add(box1, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box2, 0,border = 10, flag=wx.TOP)
+        elif num == 3 :
+            self.combo1 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num1 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box1 = wx.BoxSizer(wx.HORIZONTAL)
+            box1.Add(self.combo1, 0, flag=wx.ALIGN_LEFT)
+            box1.Add(self.num1, 0, flag=wx.ALIGN_LEFT)
+            self.combo2 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num2 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box2 = wx.BoxSizer(wx.HORIZONTAL)
+            box2.Add(self.combo2, 0, flag=wx.ALIGN_LEFT)
+            box2.Add(self.num2, 0, flag=wx.ALIGN_LEFT)
+            self.combo3 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num3 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box3 = wx.BoxSizer(wx.HORIZONTAL)
+            box3.Add(self.combo3, 0, flag=wx.ALIGN_LEFT)
+            box3.Add(self.num3, 0, flag=wx.ALIGN_LEFT)
+            sizer.Add(box1, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box2, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box3, 0, border=10, flag=wx.TOP)
+        elif num == 4 :
+            self.combo1 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num1 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box1 = wx.BoxSizer(wx.HORIZONTAL)
+            box1.Add(self.combo1, 0, flag=wx.ALIGN_LEFT)
+            box1.Add(self.num1, 0, flag=wx.ALIGN_LEFT)
+            self.combo2 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num2 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box2 = wx.BoxSizer(wx.HORIZONTAL)
+            box2.Add(self.combo2, 0, flag=wx.ALIGN_LEFT)
+            box2.Add(self.num2, 0, flag=wx.ALIGN_LEFT)
+            self.combo3 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num3 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box3 = wx.BoxSizer(wx.HORIZONTAL)
+            box3.Add(self.combo3, 0, flag=wx.ALIGN_LEFT)
+            box3.Add(self.num3, 0, flag=wx.ALIGN_LEFT)
+            self.combo4 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num4 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box4 = wx.BoxSizer(wx.HORIZONTAL)
+            box4.Add(self.combo4, 0, flag=wx.ALIGN_LEFT)
+            box4.Add(self.num4, 0, flag=wx.ALIGN_LEFT)
+            sizer.Add(box1, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box2, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box3, 0, border=10, flag=wx.TOP)
+            sizer.Add(box4, 0, border=10, flag=wx.TOP)
+        elif num == 5 :
+            self.combo1 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num1 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box1 = wx.BoxSizer(wx.HORIZONTAL)
+            box1.Add(self.combo1, 0, flag=wx.ALIGN_LEFT)
+            box1.Add(self.num1, 0, flag=wx.ALIGN_LEFT)
+            self.combo2 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num2 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box2 = wx.BoxSizer(wx.HORIZONTAL)
+            box2.Add(self.combo2, 0, flag=wx.ALIGN_LEFT)
+            box2.Add(self.num2, 0, flag=wx.ALIGN_LEFT)
+            self.combo3 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num3 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box3 = wx.BoxSizer(wx.HORIZONTAL)
+            box3.Add(self.combo3, 0, flag=wx.ALIGN_LEFT)
+            box3.Add(self.num3, 0, flag=wx.ALIGN_LEFT)
+            self.combo4 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num4 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box4 = wx.BoxSizer(wx.HORIZONTAL)
+            box4.Add(self.combo4, 0, flag=wx.ALIGN_LEFT)
+            box4.Add(self.num4, 0, flag=wx.ALIGN_LEFT)
+            self.combo5 = wx.ComboBox(self, choices=plist)  # 종류 선택
+            self.num5 = wx.TextCtrl(parent=self, name='수량')  # 수량
+            box5 = wx.BoxSizer(wx.HORIZONTAL)
+            box5.Add(self.combo5, 0, flag=wx.ALIGN_LEFT)
+            box5.Add(self.num5, 0, flag=wx.ALIGN_LEFT)
+            sizer.Add(box1, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box2, 0,border = 10, flag=wx.TOP)
+            sizer.Add(box3, 0, border=10, flag=wx.TOP)
+            sizer.Add(box4, 0, border=10, flag=wx.TOP)
+            sizer.Add(box5, 0, border=10, flag=wx.TOP)
+
+        sizer.Add(wx.StaticLine(self, size=(250, 2)), 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
+        sizer.Add(_btns_sizer, 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
+        self.SetSizer(sizer)
+    def getvalue(self,num):
+        if num == 1 :
+            return self.combo1.GetValue() ,self.num1.GetValue()
+        elif num == 2 :
+            return self.combo1.GetValue(), self.num1.GetValue(),self.combo2.GetValue(), self.num2.GetValue()
+        elif num == 3 :
+            return self.combo1.GetValue(), self.num1.GetValue(),self.combo2.GetValue(), self.num2.GetValue(),\
+                   self.combo3.GetValue(), self.num3.GetValue()
+        elif num == 4 :
+            return self.combo1.GetValue(), self.num1.GetValue(),self.combo2.GetValue(), self.num2.GetValue(),\
+                   self.combo3.GetValue(), self.num3.GetValue(),self.combo4.GetValue(), self.num4.GetValue()
+        elif num == 5 :
+            return self.combo1.GetValue(), self.num1.GetValue(),self.combo2.GetValue(), self.num2.GetValue(),\
+                   self.combo3.GetValue(), self.num3.GetValue(),self.combo4.GetValue(), self.num4.GetValue(), \
+                   self.combo5.GetValue(), self.num5.GetValue()
+
+class Setdialog(wx.Dialog):
+    def __init__(self,parent):
+        wx.Dialog.__init__(self, parent = None ,title = "세트입력",size = (300,300))
+        sizer = wx.BoxSizer(wx.VERTICAL)  # 큰 틀 사이저
+        nlist = ['1개', '2개', '3개', '4개', '5개']
+        message = wx.StaticText(self, label = '종류 개수')
+        self.combo1 = wx.ComboBox(self, choices=nlist)  # 종류 선택
+        self.okbtn = wx.Button(self, label="ok")
+        self.exbtn = wx.Button(self, label="exit")
+
+        # 바인딩
+        self.okbtn.Bind(wx.EVT_BUTTON, self.okBtn)
+        self.exbtn.Bind(wx.EVT_BUTTON, self.exBtn)
+
+        wsizer = wx.BoxSizer(wx.HORIZONTAL)
+        wsizer.Add(self.combo1, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        ocsizer = wx.BoxSizer(wx.HORIZONTAL)
+        ocsizer.Add(self.okbtn, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        ocsizer.Add(self.exbtn, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT, 10)
+
+        sizer.Add(message, 0, wx.ALIGN_CENTER | wx.TOP, 10)
+        sizer.Add(wsizer, 0, wx.ALIGN_CENTER | wx.TOP, 10)
+        sizer.Add(ocsizer, 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
+
+        self.SetSizer(sizer)
+    def okBtn(self,event):
+        self.Close(True)
+        selc = None
+        selc = int(self.combo1.GetValue().replace("개",""))
+        if selc == 1:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1 = start.getvalue(selc)
+            start.Destroy()
+
+
+        elif selc == 2:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 3:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2, product3, num3 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 4:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2, product3, num3, product4, num4 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 5:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2, product3, num3, product4, num4, product5, num5 = start.getvalue(selc)
+            start.Destroy()
+    def exBtn(self,event):
+        wx.CANCEL
+
+
+
+class Window(wx.Frame):
+    def __init__(self):
+        wx.Frame.__init__(self, parent=None, title='test')
+        self.SetSize(300, 300)  # 사이즈 설정
+        sizer = wx.BoxSizer(wx.VERTICAL) # 큰 틀 사이저
+
+        nlist = ['1개','2개','3개','4개','5개']
+        # 위젯 생성
+        message = wx.StaticText(self, label = '종류입력, 세트상품일 때 버튼을 눌러주세요')
+        self.combo1 = wx.ComboBox(self, choices = nlist) # 종류 선택
+        self.sbtn1 = wx.Button(self,label = "세트일때")
+        self.okbtn = wx.Button(self, label="ok")
+        self.exbtn = wx.Button(self, label="exit")
+
+        # 바인딩
+        self.okbtn.Bind(wx.EVT_BUTTON, self.okBtn)
+        self.exbtn.Bind(wx.EVT_BUTTON, self.exBtn)
+        self.sbtn1.Bind(wx.EVT_BUTTON, self.setBtn)
+
+        # 수평 사이저 셋팅
+        wsizer = wx.BoxSizer(wx.HORIZONTAL)
+        wsizer.Add(self.combo1,0,wx.ALIGN_CENTER_VERTICAL | wx.LEFT,10)
+        wsizer.Add(self.sbtn1,0,wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT,10)
+        ocsizer = wx.BoxSizer(wx.HORIZONTAL)
+        ocsizer.Add(self.okbtn, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        ocsizer.Add(self.exbtn, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT, 10)
+
+        # 수직 사이저 셋팅
+        sizer.Add(message, 0, wx.ALIGN_CENTER | wx.TOP , 10)
+        sizer.Add(wsizer,0,wx.ALIGN_CENTER | wx.TOP,10)
+        sizer.Add(ocsizer,0,wx.ALIGN_CENTER | wx.TOP|wx.BOTTOM,10)
+        self.SetSizer(sizer)
+
+
+
+
+    def okBtn(self,event):
+        selc = None
+        selc = int(self.combo1.GetValue().replace("개",""))
+        if selc == 1:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 2:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 3:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2, product3, num3 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 4:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2, product3, num3, product4, num4 = start.getvalue(selc)
+            start.Destroy()
+
+        elif selc == 5:
+            start = Dialog(self, selc)
+            ddd = start.ShowModal()
+            product1, num1, product2, num2, product3, num3, product4, num4, product5, num5 = start.getvalue(selc)
+            start.Destroy()
+    def exBtn(self,event):
+        wx.Exit()
+    def setBtn(self,event):
+        start = Setdialog(self)
+        ddd = start.ShowModal()
+        start.Destroy()
+
+
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    app = wx.App()
+    frame = Window()
+    frame.Show()
+
+
+    app.MainLoop()

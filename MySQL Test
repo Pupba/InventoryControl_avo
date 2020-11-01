@@ -1,0 +1,47 @@
+# test db make
+import pymysql
+pymysql.install_as_MySQLdb() # pymysql를 이용해 mysql연동객체 설치
+import MySQLdb # 임포트
+
+from sqlalchemy import create_engine
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot
+
+#접속 정보
+HOSTNAME = 'localhost'
+PROT = 3306
+USERNAME = ''
+PASSWORD = ''
+DATABASE = ''
+CHARSET1 = 'utf8' #mysql 에서 사용할 셋
+CHARSET2 = 'utf-8'#파이썬에서 사용할 셋
+
+con_str_fmt = 'mysql+mysqldb://{0}:{1}@{2}:{3}/{4}?charset={5}'
+con_str = con_str_fmt.format(USERNAME,PASSWORD,HOSTNAME,PROT,DATABASE,CHARSET1)
+
+# db접속
+engine = create_engine(con_str, encoding = CHARSET2)
+conn = engine.connect()
+
+# 읽어올 xlsx 파일 주소
+orderpath = "C:/Python/Python38/avo/ERP/ver.1/주문서/"
+ordername = str(input("주문서이름: "))
+
+df = pd.read_excel(orderpath+ordername+".xlsx")
+df['택배비'] = np.where(df["택배비"] == "무료","0",df['택배비']) #택배비 무료 0처리
+df_client = df["거래처"].dropna(axis=0,how='any')
+df_product = df["상품명"].dropna(axis=0,how='any')
+df_num = df["수량"].dropna(axis=0,how='any')
+df_countprice = df["단가"].dropna(axis=0,how='any')
+df_postprice = df["택배비"].dropna(axis=0,how='any')
+temp = pd.concat([df_client,df_product,df_num,df_countprice,df_postprice],axis=1)
+temp_ = temp.astype({"수량":'int','단가':'int','택배비':'int'})
+print(temp_)
+
+temp_.to_sql(name = 'orders',con=conn,if_exists='append',index = None)
+
+
+
+
+

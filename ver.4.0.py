@@ -28,11 +28,9 @@ num1,num2,num3,num4,num5 = 0,0,0,0,0
 setnn = None
 
 
-
-
 class backend :
     # 주문서 정리
-    def orders(self,path,name):
+    def orders(self,path,name,uname,pw,dbn):
         global orders
         df = pd.read_excel(path)
         df['택배비'] = np.where(df["택배비"] == "무료", "0", df['택배비'])  # 택배비 무료 0처리
@@ -46,27 +44,27 @@ class backend :
         orders = temp_
 
         # MySQL Connect
-        start = ConnectMySQL(self,1,name)
+        start = ConnectMySQL(self,1,name,uname,pw,dbn)
         start.ShowModal()
     # 상품 총 개수 정리
-    def product(self,name):
+    def product(self,name,uname,pw,dbn):
         # MySQL Connect
-        start = ConnectMySQL(self,2,name)
+        start = ConnectMySQL(self,2,name,uname,pw,dbn)
         start.ShowModal()
     # 병개수 정리
-    def bottles(self,name):
+    def bottles(self,name,uname,pw,dbn):
         # MySQL Connect
-        start = ConnectMySQL(self,3,name)
+        start = ConnectMySQL(self,3,name,uname,pw,dbn)
         start.ShowModal()
     # 업체별 정리
-    def client(self,name):
+    def client(self,name,uname,pw,dbn):
         # MySQL Connect
-        start = ConnectMySQL(self, 4,name)
+        start = ConnectMySQL(self, 4,name,uname,pw,dbn)
         start.ShowModal()
     # 세트 상품 분류
-    def setproduct(self,name):
+    def setproduct(self,name,uname,pw,dbn):
         # MySQL Connect
-        start = ConnectMySQL(self, 5, name)
+        start = ConnectMySQL(self, 5, name,uname,pw,dbn)
         start.ShowModal()
 
 
@@ -451,7 +449,7 @@ class Getinfo(wx.Dialog):
         return self.name.GetValue(),self.pw.GetValue(),self.dbn.GetValue()
 
 class ConnectMySQL(wx.Dialog):
-    def __init__(self,parent,control,name):
+    def __init__(self,parent,control,name,uname,pw,dbn):
         wx.Dialog.__init__(self, parent=None, title='Connecting', size=(300, 300))
         self.text = wx.StaticText(self,label = '연결중....')
         # 접속 정보
@@ -463,11 +461,12 @@ class ConnectMySQL(wx.Dialog):
         CHARSET1 = 'utf8'  # mysql 에서 사용할 셋
         CHARSET2 = 'utf-8'  # 파이썬에서 사용할 셋
 
+        # 정보 전달
+        USERNAME = uname
+        PASSWORD = pw
+        DATABASE = dbn
 
-        # 정보가져오기
-        startd = Getinfo(self)
-        startd.ShowModal()
-        USERNAME,PASSWORD,DATABASE = startd.getvalue() # 접속정보 가져오기
+        # 형변환
         USERNAME = str(USERNAME)
         PASSWORD = str(PASSWORD)
         DATABASE = str(DATABASE)
@@ -509,7 +508,14 @@ class ConnectMySQL(wx.Dialog):
                     start = backend()
                     temp = pd.read_sql('select 상품명,sum(수량) as 수량 from '+name+'orders group by 상품명',con = conn)
                     temp_ = temp.astype({'수량': 'int'})  # 형변환
+
                     start.bottlecount(temp_)
+                    # 날짜
+                    l = len(bottles)  # 세로 길이
+                    today = []  # 리스트
+                    for i in range(l):
+                        today.append(name)
+                    bottles.insert(0, 'date', today)  # 날짜칸 생성
                     bottles.to_sql(name = 'bottles',con = conn,if_exists='replace', index=None)
                     wx.MessageBox("완료!!", "db접속", wx.OK)
                 except Exception as ex:
@@ -531,9 +537,19 @@ class ConnectMySQL(wx.Dialog):
             elif control == 5:
                 global set1
                 try:
-                    sett = pd.read_sql('select 거래처,상품명,sum(수량) as 수량 from' + name + 'client where 상품명 = ' +set1)
+                    set2 = '\''+set1+'\''
+                    sett = pd.read_sql('select 거래처,상품명,sum(수량) as 수량 from ' + name + 'client where 상품명 = '+ set2,con = conn)
                     sett_ = sett.astype({'수량': 'int'})  # 형변환
+
+                    # 날짜
+                    l = len(sett_)  # 세로 길이
+                    today = []  # 리스트
+                    for i in range(l):
+                        today.append(name)
+                    sett_.insert(0, 'date', today)  # 날짜칸 생성
+
                     sett_.to_sql(name = 'setproducts',con =conn,if_exists='append',index=None)
+                    wx.MessageBox("완료!!", "db접속", wx.OK)
                 except Exception as ex:
                     t1 = str(ex)
                     wx.MessageBox("실패했습니다ㅠㅜ" + t1, "db접속", wx.OK)
@@ -580,28 +596,33 @@ class Pickcontrol(wx.Dialog):
         self.btn5.Bind(wx.EVT_BUTTON, self.setproduct)
         self.exbten.Bind(wx.EVT_BUTTON, self.exit)
 
+        # 정보가져오기
+        startd = Getinfo(self)
+        startd.ShowModal()
+        self.uname,self.pw,self.dbn = startd.getvalue()  # 접속정보 가져오기
+
 
 
     # 이벤트 셋
     def orders(self,event):
         start = backend()
-        start.orders(self.filepath,self.filename)
+        start.orders(self.filepath,self.filename,self.uname,self.pw,self.dbn)
     def product(self,event):
         start = backend()
-        start.product(self.filename)
+        start.product(self.filename,self.uname,self.pw,self.dbn)
     def bottles(self,event):
         start = backend()
-        start.bottles(self.filename)
+        start.bottles(self.filename,self.uname,self.pw,self.dbn)
     def client(self,event):
         start = backend()
-        start.client(self.filename)
+        start.client(self.filename,self.uname,self.pw,self.dbn)
     def setproduct(self,event):
         global set1
         text = wx.TextEntryDialog(self,'세트상품명 입력')
         text.ShowModal()
         set1 = text.GetValue() # 세트상품명 추출
         start = backend()
-        start.setproduct(self.filename)
+        start.setproduct(self.filename,self.uname,self.pw,self.dbn)
     def exit(self,event):
         self.Destroy()
 
@@ -658,6 +679,7 @@ class Window(wx.Frame):
             fileD.ShowModal()
             filpath = fileD.GetPath() # 경로반환 str
             filename = fileD.GetFilename().replace('.xlsx','') # 파일이름
+
             # 다이얼로그 실행
             start = Pickcontrol(self,filpath,filename)
             start.ShowModal()
